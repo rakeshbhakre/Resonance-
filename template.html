@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#05060f">
+<title>RESONANCE — Your Music. Your Game.</title>
+<style>
+/* ============================================================
+   RESONANCE — visual system
+   Dark music-universe aesthetic · neon accents · glass panels
+   ============================================================ */
+:root {
+  --bg: #05060f;
+  --panel: rgba(13, 18, 38, 0.72);
+  --panel-border: rgba(120, 160, 255, 0.14);
+  --text: #e8f0ff;
+  --dim: #8fa3c8;
+  --cyan: #22d3ee;
+  --blue: #5b8cff;
+  --violet: #c084fc;
+  --pink: #ff5ec4;
+  --gold: #ffd24a;
+  --green: #8affc1;
+  --red: #ff4d6a;
+  --font: 'Segoe UI', 'Avenir Next', system-ui, -apple-system, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  user-select: none;
+  -webkit-user-select: none;
+}
+#cv { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+
+#ui { position: fixed; inset: 0; pointer-events: none; }
+#ui > * { pointer-events: auto; }
+
+/* ---------- screens ---------- */
+.screen {
+  position: absolute; inset: 0;
+  display: flex;
+  opacity: 0; visibility: hidden;
+  transition: opacity .35s ease, visibility .35s;
+  overflow-y: auto;
+  padding: 24px;
+}
+.screen.active { opacity: 1; visibility: visible; }
+.screen .inner {
+  width: min(860px, 100%);
+  margin: auto; /* centers when it fits; scrolls correctly when it doesn't */
+  animation: riseIn .45s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes riseIn { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------- typography ---------- */
+.logo {
+  font-size: clamp(40px, 7vw, 72px);
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-align: center;
+  background: linear-gradient(100deg, #22d3ee 10%, #5b8cff 35%, #c084fc 60%, #ff5ec4 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 18px rgba(91, 140, 255, .35));
+}
+.tagline {
+  text-align: center;
+  color: var(--dim);
+  letter-spacing: .42em;
+  font-size: clamp(10px, 1.6vw, 14px);
+  font-weight: 600;
+  margin: 6px 0 30px;
+  text-indent: .42em;
+}
+h2.panel-title {
+  font-size: 12px; letter-spacing: .28em; color: var(--dim);
+  font-weight: 700; margin-bottom: 12px;
+}
+
+/* ---------- panels ---------- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 20px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.home-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; }
+@media (max-width: 720px) { .home-grid { grid-template-columns: 1fr; } }
+
+/* ---------- buttons ---------- */
+button {
+  font-family: var(--font);
+  color: var(--text);
+  background: rgba(30, 40, 70, 0.55);
+  border: 1px solid rgba(120, 160, 255, 0.22);
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  cursor: pointer;
+  transition: all .18s ease;
+}
+button:hover { border-color: rgba(120, 200, 255, .6); box-shadow: 0 0 18px rgba(60, 140, 255, .25); transform: translateY(-1px); }
+button:active { transform: translateY(0); }
+button.primary {
+  background: linear-gradient(120deg, rgba(34, 211, 238, .18), rgba(91, 140, 255, .18), rgba(192, 132, 252, .18));
+  border-color: rgba(120, 200, 255, .5);
+  font-size: 16px;
+  padding: 14px 34px;
+  letter-spacing: .14em;
+}
+button.primary:hover { box-shadow: 0 0 30px rgba(80, 160, 255, .4); }
+button.ghost { background: transparent; }
+button:disabled { opacity: .35; cursor: default; transform: none; box-shadow: none; }
+
+/* ---------- upload ---------- */
+.upload-panel { display: flex; flex-direction: column; gap: 12px; align-items: center; justify-content: center; text-align: center; }
+#btn-upload { width: 100%; padding: 22px 16px; font-size: 15px; }
+.upload-icon { font-size: 34px; display: block; margin-bottom: 8px; filter: drop-shadow(0 0 12px rgba(34,211,238,.5)); }
+.hint { color: var(--dim); font-size: 11px; letter-spacing: .06em; line-height: 1.6; }
+
+/* ---------- demo grid ---------- */
+#demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 560px) { #demo-grid { grid-template-columns: repeat(2, 1fr); } }
+.demo-card {
+  position: relative;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(20, 26, 50, 0.5);
+  border: 1px solid rgba(120, 160, 255, 0.12);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all .18s ease;
+  min-height: 74px;
+}
+.demo-card:hover { transform: translateY(-2px); border-color: var(--card-c, rgba(120,160,255,.4)); box-shadow: 0 4px 22px -6px var(--card-c, rgba(90,140,255,.4)); }
+.demo-card .dc-glyph {
+  font-size: 20px;
+  margin-bottom: 4px;
+  color: var(--card-c);
+  filter: drop-shadow(0 0 8px var(--card-c));
+}
+.demo-card .dc-title { font-weight: 700; font-size: 13px; letter-spacing: .02em; }
+.demo-card .dc-meta { font-size: 10px; color: var(--dim); letter-spacing: .1em; margin-top: 3px; }
+.demo-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(120px 60px at 85% -10%, var(--card-c), transparent 70%);
+  opacity: .13;
+  pointer-events: none;
+}
+
+/* ---------- pickers ---------- */
+.home-row { display: flex; justify-content: center; margin-top: 16px; flex-wrap: wrap; gap: 10px; }
+.mode-card {
+  flex: 0 1 180px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(20, 26, 50, 0.5);
+  border: 1px solid rgba(120, 160, 255, 0.12);
+  cursor: pointer;
+  transition: all .18s ease;
+  text-align: left;
+}
+.mode-card .mc-name { font-weight: 800; font-size: 14px; letter-spacing: .1em; }
+.mode-card .mc-desc { font-size: 11px; color: var(--dim); margin-top: 3px; line-height: 1.4; }
+.mode-card.sel {
+  border-color: rgba(34, 211, 238, 0.7);
+  background: rgba(34, 211, 238, 0.08);
+  box-shadow: 0 0 20px -4px rgba(34, 211, 238, 0.35);
+}
+.seg { display: inline-flex; border-radius: 12px; overflow: hidden; border: 1px solid rgba(120,160,255,.18); }
+.seg button { border: none; border-radius: 0; padding: 9px 14px; font-size: 11px; letter-spacing: .12em; background: rgba(20,26,50,.5); }
+.seg button.sel { background: rgba(91, 140, 255, 0.22); color: #cfe4ff; box-shadow: inset 0 0 14px rgba(91,140,255,.25); }
+.diff-label { font-size: 11px; color: var(--dim); letter-spacing: .2em; align-self: center; margin-right: 4px; }
+
+footer.home-footer { display: flex; justify-content: center; align-items: center; gap: 18px; margin-top: 26px; flex-wrap: wrap; }
+.privacy { font-size: 10px; color: var(--dim); letter-spacing: .14em; }
+
+/* ---------- analyzing screen ---------- */
+.an-wrap { text-align: center; }
+.an-file { color: var(--cyan); font-weight: 700; letter-spacing: .06em; font-size: 17px; margin: 4px 0 22px; }
+.an-bar-wrap {
+  height: 8px; border-radius: 4px;
+  background: rgba(30, 40, 70, 0.6);
+  overflow: hidden; margin: 0 auto 8px;
+  max-width: 520px;
+  border: 1px solid rgba(120,160,255,.15);
+}
+#an-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #22d3ee, #5b8cff, #c084fc);
+  box-shadow: 0 0 16px rgba(91, 140, 255, .8);
+  transition: width .18s ease;
+}
+#an-stage { color: var(--dim); font-size: 12px; letter-spacing: .3em; margin-bottom: 18px; min-height: 16px; }
+#an-wave { width: min(560px, 90vw); height: 84px; display: block; margin: 0 auto 18px; border-radius: 10px; background: rgba(10, 14, 30, 0.6); border: 1px solid rgba(120,160,255,.12); }
+.an-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; max-width: 620px; margin: 0 auto 8px; }
+.stat {
+  background: rgba(20, 26, 50, 0.55);
+  border: 1px solid rgba(120, 160, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 8px;
+}
+.stat .st-v { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.stat .st-l { font-size: 9px; color: var(--dim); letter-spacing: .22em; margin-top: 2px; }
+.sections-ribbon { display: flex; max-width: 620px; margin: 12px auto 18px; height: 26px; border-radius: 7px; overflow: hidden; border: 1px solid rgba(120,160,255,.15); }
+.sec-block { position: relative; height: 100%; min-width: 16px; }
+.sec-block span {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 700; letter-spacing: .14em; color: rgba(255,255,255,.85); text-shadow: 0 1px 3px rgba(0,0,0,.7);
+}
+.an-actions { display: flex; gap: 12px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+.an-note { color: var(--dim); font-size: 11px; margin-top: 10px; letter-spacing: .06em; }
+.intensity-meter { display: inline-block; width: 70px; height: 8px; border-radius: 4px; background: rgba(30,40,70,.7); overflow: hidden; vertical-align: middle; margin-left: 6px; }
+.intensity-meter i { display: block; height: 100%; background: linear-gradient(90deg, #22d3ee, #ff5ec4, #ff8a3d); }
+
+/* ---------- HUD ---------- */
+#hud { position: absolute; inset: 0; pointer-events: none; transition: opacity .4s; }
+#hud.hidden { opacity: 0; }
+.hud-top { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: flex-start; padding: 14px 18px; }
+.hud-score { text-align: left; }
+#hud-score-num { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .04em; text-shadow: 0 0 14px rgba(91, 140, 255, .5); }
+#hud-acc { font-size: 11px; color: var(--dim); letter-spacing: .16em; }
+.hud-center { text-align: center; flex: 1; padding: 0 14px; min-width: 0; }
+#hud-song { font-size: 11px; color: var(--dim); letter-spacing: .14em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40vw; margin: 0 auto; }
+#progress-wrap { width: min(300px, 30vw); height: 4px; background: rgba(120, 160, 255, 0.14); border-radius: 2px; margin: 7px auto 0; position: relative; }
+#progress-fill { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: 2px; background: linear-gradient(90deg, #22d3ee, #c084fc); box-shadow: 0 0 8px rgba(120, 200, 255, .6); }
+#hud-section {
+  font-size: 10px; letter-spacing: .34em; margin-top: 7px; color: var(--violet);
+  text-transform: uppercase; opacity: 0; transition: opacity .5s;
+}
+#hud-section.show { opacity: .95; }
+.hud-right { text-align: right; position: relative; }
+#hud-combo { font-size: 22px; font-weight: 800; color: #cfe4ff; text-shadow: 0 0 12px rgba(34, 211, 238, .6); }
+#hud-combo.pop { animation: comboPop .25s ease; }
+@keyframes comboPop { 40% { transform: scale(1.3); } }
+#hud-mult { font-size: 11px; color: var(--gold); letter-spacing: .18em; }
+#btn-pause {
+  position: absolute; top: -6px; right: -6px;
+  padding: 7px 11px; font-size: 13px; border-radius: 9px; pointer-events: auto;
+}
+.hud-flow {
+  position: absolute; left: 18px; bottom: 18px; width: 130px;
+}
+.hud-flow .fl-label { font-size: 9px; letter-spacing: .3em; color: var(--dim); margin-bottom: 4px; }
+.hud-flow .fl-bar { height: 5px; border-radius: 3px; background: rgba(30,40,70,.7); overflow: hidden; }
+#hud-flow-fill { height: 100%; width: 60%; background: linear-gradient(90deg, #22d3ee, #8affc1); border-radius: 3px; }
+#hud-adaptive { position: absolute; bottom: 18px; right: 18px; font-size: 9px; letter-spacing: .26em; color: var(--dim); opacity: .6; }
+#hud-adaptive.on { color: var(--green); opacity: 1; }
+
+/* ---------- countdown ---------- */
+#countdown { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+#countdown.hidden { display: none; }
+#count-num {
+  font-size: clamp(90px, 18vw, 190px); font-weight: 800; letter-spacing: .05em;
+  text-shadow: 0 0 40px rgba(91, 140, 255, .8), 0 0 90px rgba(34, 211, 238, .5);
+  animation: countPop .9s cubic-bezier(.2,.9,.3,1) both;
+}
+@keyframes countPop { 0% { transform: scale(1.8); opacity: 0; } 22% { transform: scale(1); opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; transform: scale(.92); } }
+
+/* ---------- overlays & modals ---------- */
+.overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(4, 6, 15, 0.72);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  opacity: 0; visibility: hidden; transition: all .25s ease;
+  z-index: 40; padding: 20px;
+}
+.overlay.show { opacity: 1; visibility: visible; }
+.modal {
+  width: min(560px, 100%);
+  max-height: 86vh; overflow-y: auto;
+  background: rgba(13, 18, 38, 0.92);
+  border: 1px solid rgba(120, 160, 255, 0.2);
+  border-radius: 18px; padding: 26px;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.6);
+}
+.modal h3 { letter-spacing: .22em; font-size: 15px; margin-bottom: 18px; color: #cfe4ff; }
+.modal .row { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 11px 0; border-bottom: 1px solid rgba(120,160,255,.08); }
+.modal .row:last-of-type { border-bottom: none; }
+.modal .row label { font-size: 13px; }
+.modal .row .sub { display: block; font-size: 10px; color: var(--dim); margin-top: 2px; letter-spacing: .04em; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+input[type="range"] { width: 150px; accent-color: #5b8cff; }
+.toggle { position: relative; width: 42px; height: 22px; border-radius: 11px; background: rgba(30,40,70,.9); border: 1px solid rgba(120,160,255,.25); cursor: pointer; transition: all .2s; flex-shrink: 0; }
+.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #8fa3c8; transition: all .2s; }
+.toggle.on { background: rgba(34, 211, 238, 0.3); border-color: rgba(34, 211, 238, 0.6); }
+.toggle.on::after { left: 22px; background: #22d3ee; box-shadow: 0 0 8px rgba(34, 211, 238, .8); }
+
+/* pause */
+#pause .pause-title { text-align: center; font-size: 22px; letter-spacing: .3em; font-weight: 800; margin-bottom: 6px; }
+#pause .pause-sub { text-align: center; color: var(--dim); font-size: 11px; letter-spacing: .16em; margin-bottom: 20px; }
+#pause .modal { text-align: center; width: min(420px, 100%); }
+#pause .modal-actions { justify-content: center; }
+.pause-stats { display: flex; justify-content: center; gap: 26px; margin: 14px 0 6px; }
+.pause-stats div { text-align: center; }
+.pause-stats .pv { font-size: 20px; font-weight: 800; }
+.pause-stats .pl { font-size: 9px; color: var(--dim); letter-spacing: .2em; }
+
+/* help */
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+@media (max-width: 560px) { .legend { grid-template-columns: 1fr; } }
+.legend .lg { display: flex; gap: 10px; align-items: center; background: rgba(20,26,50,.45); border-radius: 10px; padding: 9px 12px; }
+.legend .lg-ic { font-size: 18px; width: 26px; text-align: center; filter: drop-shadow(0 0 6px currentColor); }
+.legend .lg-tx { font-size: 11px; color: var(--dim); line-height: 1.45; }
+.legend .lg-tx b { color: var(--text); display: block; font-size: 12px; }
+kbd {
+  background: rgba(30, 40, 70, .8); border: 1px solid rgba(120,160,255,.3);
+  border-bottom-width: 2px; border-radius: 5px; padding: 1px 7px; font-size: 11px; font-family: var(--font);
+}
+
+/* ---------- results ---------- */
+#scr-results .inner { text-align: center; }
+.res-head { font-size: 12px; letter-spacing: .4em; color: var(--dim); }
+.res-song { font-size: clamp(20px, 4vw, 30px); font-weight: 800; margin: 6px 0 2px; }
+.res-sub { color: var(--dim); font-size: 12px; letter-spacing: .18em; margin-bottom: 18px; }
+.res-grade-row { display: flex; align-items: center; justify-content: center; gap: 30px; margin-bottom: 6px; flex-wrap: wrap; }
+.res-grade {
+  font-size: 96px; font-weight: 800; line-height: 1;
+  text-shadow: 0 0 34px var(--gc, rgba(91,140,255,.8)), 0 0 80px var(--gc, rgba(91,140,255,.4));
+  color: #fff;
+  animation: gradeIn .6s cubic-bezier(.2,.9,.3,1.4);
+}
+@keyframes gradeIn { from { transform: scale(2.2); opacity: 0; } }
+.res-stars { font-size: 30px; letter-spacing: .12em; color: #3a4a6a; text-shadow: none; }
+.res-stars .on { color: var(--gold); text-shadow: 0 0 16px rgba(255, 210, 74, .8); }
+.res-score-wrap { margin: 6px 0 18px; }
+#res-score { font-size: clamp(34px, 6vw, 52px); font-weight: 800; font-variant-numeric: tabular-nums; text-shadow: 0 0 26px rgba(91, 140, 255, .6); }
+#res-best-badge { display: inline-block; margin-left: 10px; padding: 3px 10px; border-radius: 20px; font-size: 10px; letter-spacing: .2em; color: #06131f; background: linear-gradient(90deg, #ffd24a, #ff8a3d); font-weight: 800; vertical-align: middle; }
+.res-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; max-width: 640px; margin: 0 auto 14px; }
+#res-timing { width: min(560px, 92vw); height: 110px; display: block; margin: 4px auto 10px; border-radius: 10px; background: rgba(10,14,30,.6); border: 1px solid rgba(120,160,255,.12); }
+.res-calib-hint { font-size: 11px; color: var(--gold); letter-spacing: .06em; margin-bottom: 8px; min-height: 15px; }
+.res-bests { max-width: 520px; margin: 0 auto 18px; text-align: left; }
+.res-bests h4 { font-size: 10px; letter-spacing: .3em; color: var(--dim); text-align: center; margin-bottom: 8px; }
+.best-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 6px 12px; border-radius: 8px; background: rgba(20,26,50,.4); margin-bottom: 4px; }
+.best-row.me { border: 1px solid rgba(255, 210, 74, .45); }
+.best-row .br-l { color: var(--dim); font-size: 10px; letter-spacing: .08em; }
+.res-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ---------- toasts / drop ---------- */
+#toasts { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; z-index: 60; pointer-events: none; }
+.toast {
+  background: rgba(13, 18, 38, 0.94); border: 1px solid rgba(120, 160, 255, .3);
+  padding: 10px 22px; border-radius: 30px; font-size: 12px; letter-spacing: .08em;
+  box-shadow: 0 8px 30px rgba(0,0,0,.5);
+  animation: toastIn .3s ease;
+}
+.toast.err { border-color: rgba(255, 77, 106, .5); color: #ffb3c0; }
+@keyframes toastIn { from { transform: translateY(14px); opacity: 0; } }
+#drop-overlay {
+  position: absolute; inset: 12px; border: 2px dashed rgba(34, 211, 238, .7);
+  border-radius: 20px; background: rgba(6, 12, 28, .82);
+  display: flex; align-items: center; justify-content: center; z-index: 70;
+  font-size: 20px; font-weight: 800; letter-spacing: .3em; color: var(--cyan);
+  text-shadow: 0 0 20px rgba(34, 211, 238, .8);
+}
+#drop-overlay.hidden { display: none; }
+
+/* touch pulse button */
+#btn-pulse {
+  position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
+  width: 64px; height: 64px; border-radius: 50%;
+  font-size: 22px; padding: 0;
+  background: rgba(255, 224, 138, .12);
+  border: 2px solid rgba(255, 224, 138, .55);
+  color: #ffe08a;
+  z-index: 30; display: none;
+}
+#btn-pulse.visible { display: block; }
+#btn-pulse:active { background: rgba(255, 224, 138, .35); }
+
+/* section announce */
+#section-announce {
+  position: absolute; top: 24%; left: 50%; transform: translateX(-50%);
+  font-size: clamp(22px, 4.5vw, 40px); font-weight: 800; letter-spacing: .5em; text-indent: .5em;
+  color: #fff; text-shadow: 0 0 30px var(--sc, rgba(192,132,252,.9));
+  opacity: 0; pointer-events: none; z-index: 20;
+}
+#section-announce.show { animation: secIn 2s ease both; }
+@keyframes secIn { 0% { opacity: 0; transform: translateX(-50%) scale(1.15); } 18% { opacity: .95; transform: translateX(-50%) scale(1); } 80% { opacity: .95; } 100% { opacity: 0; } }
+
+/* short viewports: compact everything so START is always reachable */
+@media (max-height: 720px) {
+  .screen { padding: 12px 18px; }
+  .logo { font-size: clamp(34px, 6vw, 54px); }
+  .tagline { margin: 4px 0 16px; }
+  .panel { padding: 14px; border-radius: 13px; }
+  .home-grid { gap: 12px; }
+  #btn-upload { padding: 14px 14px; }
+  .demo-card { min-height: 56px; }
+  #demo-grid { gap: 8px; }
+  .mode-card { flex: 0 1 160px; padding: 9px 12px; }
+  .home-row { margin-top: 10px; }
+  footer.home-footer { margin-top: 14px; gap: 12px; }
+  .an-file { font-size: 15px; margin: 2px 0 12px; }
+  #an-wave { height: 52px; margin-bottom: 12px; }
+  .an-stats { gap: 7px; }
+  .stat { padding: 7px 6px; }
+  .stat .st-v { font-size: 16px; }
+  .sections-ribbon { height: 20px; margin: 8px auto 10px; }
+  .an-actions { margin-top: 10px; }
+  .an-note { display: none; }
+  button.primary { padding: 11px 26px; font-size: 14px; }
+}
+
+/* reduced motion */
+body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::after { animation-duration: .001s !important; transition-duration: .05s !important; }
+body.reduced-motion #count-num { animation: none; opacity: 1; }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(91, 140, 255, .3); border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="ui">
+
+  <!-- ============ HOME ============ -->
+  <section class="screen active" id="scr-home">
+    <div class="inner">
+      <h1 class="logo">RESONANCE</h1>
+      <p class="tagline">YOUR MUSIC · YOUR GAME</p>
+      <div class="home-grid">
+        <div class="panel upload-panel">
+          <div>
+            <button id="btn-upload"><span class="upload-icon">♫</span>UPLOAD A SONG</button>
+            <p class="hint">MP3 · WAV · OGG · M4A<br>or drag &amp; drop a file anywhere</p>
+          </div>
+        </div>
+        <div class="panel">
+          <h2 class="panel-title">OR PICK A DEMO TRACK</h2>
+          <div id="demo-grid"></div>
+        </div>
+      </div>
+      <div class="home-row" id="mode-picker"></div>
+      <div class="home-row">
+        <span class="diff-label">DIFFICULTY</span>
+        <div class="seg" id="diff-picker"></div>
+      </div>
+      <footer class="home-footer">
+        <button class="ghost" id="btn-help">HOW TO PLAY</button>
+        <button class="ghost" id="btn-settings">SETTINGS</button>
+        <span class="privacy">⚡ 100% LOCAL — YOUR MUSIC NEVER LEAVES YOUR DEVICE</span>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ============ ANALYZING ============ -->
+  <section class="screen" id="scr-analyze">
+    <div class="inner an-wrap">
+      <h2 class="panel-title" style="text-align:center">PREPARING YOUR GAME</h2>
+      <div class="an-file" id="an-file">—</div>
+      <div class="an-bar-wrap"><div id="an-bar"></div></div>
+      <div id="an-stage">DECODING</div>
+      <div class="an-actions">
+        <button class="primary" id="btn-start" disabled>START ▶</button>
+        <button class="ghost" id="btn-back">BACK</button>
+      </div>
+      <canvas id="an-wave" width="560" height="84"></canvas>
+      <div class="an-stats" id="an-stats"></div>
+      <div class="sections-ribbon" id="an-ribbon"></div>
+      <div class="an-note" id="an-note"></div>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section class="screen" id="scr-results">
+    <div class="inner">
+      <div class="res-head" id="res-head">TRACK COMPLETE</div>
+      <div class="res-song" id="res-song">—</div>
+      <div class="res-sub" id="res-sub">—</div>
+      <div class="res-grade-row">
+        <div class="res-grade" id="res-grade">S</div>
+        <div>
+          <div class="res-stars" id="res-stars"></div>
+          <div class="res-score-wrap"><span id="res-score">0</span><span id="res-best-badge" style="display:none">NEW BEST</span></div>
+        </div>
+      </div>
+      <div class="res-grid" id="res-grid"></div>
+      <canvas id="res-timing" width="560" height="110"></canvas>
+      <div class="res-calib-hint" id="res-calib-hint"></div>
+      <div class="res-bests" id="res-bests"></div>
+      <div class="res-actions">
+        <button class="primary" id="btn-replay">↻ REPLAY</button>
+        <button id="btn-new">NEW SONG</button>
+        <button id="btn-share">⤓ SHARE RESULT</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HUD ============ -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <div class="hud-score">
+        <div id="hud-score-num">0</div>
+        <div id="hud-acc">100.0%</div>
+      </div>
+      <div class="hud-center">
+        <div id="hud-song">—</div>
+        <div id="progress-wrap"><div id="progress-fill"></div></div>
+        <div id="hud-section"></div>
+      </div>
+      <div class="hud-right">
+        <div id="hud-combo">×0</div>
+        <div id="hud-mult">MULT ×1</div>
+        <button id="btn-pause" title="Pause (Esc)">❚❚</button>
+      </div>
+    </div>
+    <div class="hud-flow" id="hud-flow">
+      <div class="fl-label">FLOW</div>
+      <div class="fl-bar"><div id="hud-flow-fill"></div></div>
+    </div>
+    <div id="hud-adaptive">ADAPTIVE</div>
+  </div>
+
+  <div id="countdown" class="hidden"><span id="count-num">3</span></div>
+  <div id="section-announce"></div>
+  <button id="btn-pulse" title="Peak moment (Space)">◈</button>
+
+  <!-- ============ PAUSE ============ -->
+  <div class="overlay" id="pause">
+    <div class="modal">
+      <div class="pause-title">PAUSED</div>
+      <div class="pause-sub" id="pause-song">—</div>
+      <div class="pause-stats">
+        <div><div class="pv" id="pause-score">0</div><div class="pl">SCORE</div></div>
+        <div><div class="pv" id="pause-combo">0</div><div class="pl">COMBO</div></div>
+        <div><div class="pv" id="pause-acc">—</div><div class="pl">ACCURACY</div></div>
+      </div>
+      <div style="margin:10px auto 4px;max-width:280px">
+        <div id="pause-time" style="font-size:10px;color:var(--dim);letter-spacing:.2em;margin-bottom:5px">0:00 / 0:00</div>
+        <div style="height:4px;border-radius:2px;background:rgba(120,160,255,.14);overflow:hidden">
+          <div id="pause-progress-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#22d3ee,#c084fc);border-radius:2px"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="primary" id="btn-resume">▶ RESUME</button>
+        <button id="btn-restart">↻ RESTART</button>
+        <button id="btn-pause-settings">SETTINGS</button>
+        <button id="btn-quit">✕ QUIT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS ============ -->
+  <div class="overlay" id="modal-settings">
+    <div class="modal">
+      <h3>SETTINGS</h3>
+      <div class="row"><label>Music volume</label><input type="range" id="set-volume" min="0" max="100" value="85"></div>
+      <div class="row"><label>Hit sounds<span class="sub">feedback blips on judgments</span></label><div class="toggle on" id="set-sfx"></div></div>
+      <div class="row"><label>Audio latency<span class="sub">compensates headphone / BT delay</span></label>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          <button id="btn-calibrate" style="padding:7px 12px;font-size:10px;letter-spacing:.14em">TAP TEST</button>
+          <input type="range" id="set-calib" min="-200" max="200" value="0" step="5"><span id="set-calib-v" style="font-size:11px;width:52px;text-align:right">0 ms</span>
+        </div>
+      </div>
+      <div id="set-calib-status" style="font-size:11px;color:var(--cyan);letter-spacing:.05em;min-height:14px;text-align:right;margin:-6px 0 4px"></div>
+      <div class="row"><label>Visual intensity</label>
+        <div class="seg" id="set-intensity">
+          <button data-v="0.5">LOW</button><button data-v="1" class="sel">MED</button><button data-v="1.4">HIGH</button>
+        </div>
+      </div>
+      <div class="row"><label>Reduced motion<span class="sub">disables shake &amp; flashes</span></label><div class="toggle" id="set-reduced"></div></div>
+      <div class="row"><label>Shape indicators<span class="sub">judgment glyphs (colorblind-friendly)</span></label><div class="toggle on" id="set-shapes"></div></div>
+      <div class="row"><label>Show key labels</label><div class="toggle on" id="set-keys"></div></div>
+      <div class="modal-actions"><button class="primary" id="btn-set-done">DONE</button></div>
+    </div>
+  </div>
+
+  <!-- ============ HELP ============ -->
+  <div class="overlay" id="modal-help">
+    <div class="modal">
+      <h3>HOW TO PLAY</h3>
+      <p style="font-size:12px;color:var(--dim);line-height:1.6">Targets fall down four lanes with your music. Hit them the moment they reach the pads.</p>
+      <div class="legend">
+        <div class="lg"><div class="lg-ic" style="color:#22d3ee">●</div><div class="lg-tx"><b>TARGET</b>Press the lane key on the beat</div></div>
+        <div class="lg"><div class="lg-ic" style="color:#ffd24a">◆</div><div class="lg-tx"><b>SPECIAL</b>Downbeat target — worth 1.5×</div></div>
+        <div class="lg"><div class="lg-ic" style="color:#22d3ee">◉</div><div class="lg-tx"><b>HOLD</b>Press and hold until the beam ends</div></div>
+        <div class="lg"><div class="lg-ic" style="color:#ff5e3a">✕</div><div class="lg-tx"><b>HAZARD</b>Do <b>NOT</b> press this lane — let it pass</div></div>
+        <div class="lg"><div class="lg-ic" style="color:#8affc1">•</div><div class="lg-tx"><b>ORB</b>Drifts to you — collect for bonus</div></div>
+        <div class="lg"><div class="lg-ic" style="color:#ffe08a">◈</div><div class="lg-tx"><b>PEAK MOMENT</b>Press <kbd>SPACE</kbd> when the golden ring closes</div></div>
+      </div>
+      <p style="font-size:12px;color:var(--dim);line-height:1.8">
+        <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> or <kbd>←</kbd> <kbd>↓</kbd> <kbd>↑</kbd> <kbd>→</kbd> — lanes · tap lanes on touch<br>
+        <kbd>SPACE</kbd> — peak moments · <kbd>ESC</kbd> — pause<br>
+        Combos raise your multiplier · perfect streaks charge <b>FLOW</b> · misses drain it
+      </p>
+      <div class="modal-actions"><button class="primary" id="btn-help-done">GOT IT</button></div>
+    </div>
+  </div>
+
+  <!-- ============ SHARE ============ -->
+  <div class="overlay" id="modal-share">
+    <div class="modal" style="text-align:center">
+      <h3>YOUR RESULT CARD</h3>
+      <img id="share-img" style="max-width:100%;border-radius:14px;border:1px solid rgba(120,160,255,.25)" alt="Result card">
+      <p class="hint" style="margin-top:10px">Long-press / right-click to save — or use the download button.</p>
+      <div class="modal-actions" style="justify-content:center">
+        <a id="share-dl" download="resonance-result.png"><button class="primary">⤓ DOWNLOAD PNG</button></a>
+        <button id="btn-share-done">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="drop-overlay" class="hidden">DROP YOUR TRACK ♫</div>
+  <div id="toasts"></div>
+</div>
+
+<input type="file" id="file-input" accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac,.aac" hidden>
+
+<script type="text/plain" id="analyzer-src">__ANALYZER__</script>
+__SCRIPTS__
+</body>
+</html>
